@@ -1,6 +1,8 @@
-# NYKSK-Hub
-Hub for KSK Members
-[index.2.html](https://github.com/user-attachments/files/25372982/kendo-dojo-hub.2.html)
+# New York Kenshinkai Hub
+   
+   Event calendar and schedule for New York Kenshinkai dojo members.
+   
+   [Access the Hub →](https://YOUR-USERNAME.github.io/nykenshinkai-hub/)
 <!DOCTYPE html>
 <html lang="en">
 <head>
