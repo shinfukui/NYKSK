@@ -1,3 +1,5 @@
+[kendo-dojo-hub (10).html](https://github.com/user-attachments/files/25399029/kendo-dojo-hub.10.html)
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1764,61 +1766,32 @@ function tryLogin() {
   // Check if member exists (EXACT match, case-sensitive)
   const existingMember = members.find(m => m.name === name);
   
-  // ADMIN PASSCODE: Check for similar names to prevent duplicates
-  if (role === 'admin') {
-    if (!existingMember) {
-      // Check for similar names (case-insensitive)
-      const similarNames = members.filter(m => m.name.toLowerCase() === name.toLowerCase());
-      
-      if (similarNames.length > 0) {
-        const similar = similarNames[0];
-        if (confirm(`Found existing member: "${similar.name}"\n\nIs this you?\n\nClick OK to log in as ${similar.name}\nClick Cancel to create new account as ${name}`)) {
-          // Log in as existing member
-          currentUser = { name: similar.name, role: similar.role };
-          currentRole = similar.role;
-        } else {
-          // Create new account with the exact name they typed
-          members.push({ name, role: 'admin', joined: new Date().toLocaleDateString('en-US',{month:'short',year:'numeric'}) });
-          saveData(); // Save to localStorage
-          currentUser = { name, role: 'admin' };
-          currentRole = 'admin';
-          showToast('✨ Admin account created for ' + name);
-        }
-      } else {
-        // No similar names found, create new admin
-        members.push({ name, role: 'admin', joined: new Date().toLocaleDateString('en-US',{month:'short',year:'numeric'}) });
-        saveData(); // Save to localStorage
-        currentUser = { name, role: 'admin' };
-        currentRole = 'admin';
-        showToast('✨ Admin account created for ' + name);
-      }
+  // ALL USERS: Must be pre-registered (no auto-registration for anyone)
+  if (!existingMember) {
+    // Check for similar names and suggest correction
+    const similarNames = members.filter(m => m.name.toLowerCase() === name.toLowerCase());
+    if (similarNames.length > 0) {
+      document.getElementById('loginError').textContent = `Name not found. Did you mean "${similarNames[0].name}"? (case-sensitive)`;
     } else {
-      // Exact match exists, log in
-      currentUser = { name, role: existingMember.role };
-      currentRole = existingMember.role;
+      document.getElementById('loginError').textContent = 'Your name is not registered. Contact the admin.';
     }
+    pinBuffer = ''; updateDots(); return;
   }
-  // MEMBER/TRUSTED PASSCODE: Must be pre-registered with EXACT name
-  else {
-    if (!existingMember) {
-      // Check for similar names and suggest correction
-      const similarNames = members.filter(m => m.name.toLowerCase() === name.toLowerCase());
-      if (similarNames.length > 0) {
-        document.getElementById('loginError').textContent = `Name not found. Did you mean "${similarNames[0].name}"? (case-sensitive)`;
-      } else {
-        document.getElementById('loginError').textContent = 'Your name is not registered. Contact the admin.';
-      }
-      pinBuffer = ''; updateDots(); return;
-    }
-    // Verify their registered role matches the passcode they used
-    const expectedRole = (pinBuffer === PASSCODE_TRUSTED) ? 'trusted' : 'member';
-    if (existingMember.role !== expectedRole && !(existingMember.role === 'admin')) {
-      document.getElementById('loginError').textContent = 'Wrong passcode for your role. Contact admin.';
-      pinBuffer = ''; updateDots(); return;
-    }
-    currentUser = { name, role: existingMember.role };
-    currentRole = existingMember.role;
+  
+  // Verify the passcode matches their registered role
+  let expectedPasscode = '';
+  if (existingMember.role === 'admin') expectedPasscode = PASSCODE_ADMIN;
+  else if (existingMember.role === 'trusted') expectedPasscode = PASSCODE_TRUSTED;
+  else if (existingMember.role === 'member') expectedPasscode = PASSCODE_MEMBER;
+  
+  if (pinBuffer !== expectedPasscode) {
+    document.getElementById('loginError').textContent = 'Wrong passcode for your role. Contact admin.';
+    pinBuffer = ''; updateDots(); return;
   }
+  
+  // Success - log them in
+  currentUser = { name, role: existingMember.role };
+  currentRole = existingMember.role;
   
   document.getElementById('loginOverlay').classList.add('hidden');
   setTimeout(() => document.getElementById('loginOverlay').style.display='none', 500);
@@ -1856,9 +1829,11 @@ function avColor(i) { return AV_COLORS[i % AV_COLORS.length]; }
 function initials(name) { return name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(); }
 
 // ─── MEMBERS LIST ─────────────────────────────────────────────────────────
-let members = [];
-// First person to use admin passcode (9999) will be auto-registered as admin
-// Then they can add other members through the Members panel
+let members = [
+  { name: 'Shin', role: 'admin', joined: 'Feb 2026' }
+];
+// Only pre-registered members can log in
+// Admins can add new members through the Members panel
 
 // ─── MESSAGE BOARD ────────────────────────────────────────────────────────
 let messages = [];
