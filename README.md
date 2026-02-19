@@ -1763,6 +1763,11 @@
 
 <script>
 // ═══════════════════════════════════════════════════════════════════════════
+// GOOGLE SHEETS BACKEND — your data syncs between all users!
+// ═══════════════════════════════════════════════════════════════════════════
+const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbxiJhKHZTPuj6HKozB4O8ZKhdjLM4Pa0PRIYTXSA6NBY_da1HMTh_gQQzroUaULlYGH/exec';
+
+// ═══════════════════════════════════════════════════════════════════════════
 // PASSCODES — change these before sharing with your dojo!
 // ═══════════════════════════════════════════════════════════════════════════
 const PASSCODE_MEMBER  = '1726';   // share with all members
@@ -1848,10 +1853,14 @@ function tryLogin() {
   document.getElementById('loginOverlay').classList.add('hidden');
   setTimeout(() => document.getElementById('loginOverlay').style.display='none', 500);
   updateHeaderForRole();
-  renderUpcoming();
-  renderEvents();
-  renderMessages();
-  showToast('⚔️ Welcome, ' + name + '!');
+  
+  // Load data from Google Sheets and then render
+  loadData().then(() => {
+    renderUpcoming();
+    renderEvents();
+    renderMessages();
+    showToast('⚔️ Welcome, ' + name + '!');
+  });
 }
 document.addEventListener('keydown', function(e) {
   if (!currentUser && e.key >= '0' && e.key <= '9') pinPress(e.key);
@@ -1892,33 +1901,71 @@ let members = [
 // ─── MESSAGE BOARD ────────────────────────────────────────────────────────
 let messages = [];
 
-// ─── PERSISTENT STORAGE ───────────────────────────────────────────────────
-function saveData() {
+// ─── PERSISTENT STORAGE (GOOGLE SHEETS) ──────────────────────────────────
+async function saveData() {
   try {
-    localStorage.setItem('nyksk_members', JSON.stringify(members));
-    localStorage.setItem('nyksk_events', JSON.stringify(events));
-    localStorage.setItem('nyksk_messages', JSON.stringify(messages));
+    // Save all three datasets to Google Sheets
+    await fetch(GOOGLE_SHEET_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'saveMembers', members })
+    });
+    
+    await fetch(GOOGLE_SHEET_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'saveEvents', events })
+    });
+    
+    await fetch(GOOGLE_SHEET_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'saveMessages', messages })
+    });
   } catch (e) {
     console.error('Failed to save data:', e);
   }
 }
 
-function loadData() {
+async function loadData() {
   try {
-    const savedMembers = localStorage.getItem('nyksk_members');
-    const savedEvents = localStorage.getItem('nyksk_events');
-    const savedMessages = localStorage.getItem('nyksk_messages');
+    // Load members
+    const membersRes = await fetch(GOOGLE_SHEET_URL + '?action=getMembers');
+    const loadedMembers = await membersRes.json();
+    if (loadedMembers && loadedMembers.length > 0) {
+      members = loadedMembers;
+    }
     
-    if (savedMembers) members = JSON.parse(savedMembers);
-    if (savedEvents) events = JSON.parse(savedEvents);
-    if (savedMessages) messages = JSON.parse(savedMessages);
+    // Load events
+    const eventsRes = await fetch(GOOGLE_SHEET_URL + '?action=getEvents');
+    const loadedEvents = await eventsRes.json();
+    if (loadedEvents && loadedEvents.length > 0) {
+      events = loadedEvents;
+    }
+    
+    // Load messages
+    const messagesRes = await fetch(GOOGLE_SHEET_URL + '?action=getMessages');
+    const loadedMessages = await messagesRes.json();
+    if (loadedMessages && loadedMessages.length > 0) {
+      messages = loadedMessages;
+    }
   } catch (e) {
     console.error('Failed to load data:', e);
   }
 }
 
-// Load saved data on startup
-loadData();
+// Load data on startup
+loadData().then(() => {
+  // Render after data is loaded
+  if (currentUser) {
+    renderMessages();
+    renderEvents();
+    renderUpcoming();
+  }
+});
 
 function postMessage() {
   if (!currentUser) return;
@@ -2634,4 +2681,3 @@ document.getElementById('loginName').addEventListener('keydown',    e=>{if(e.key
 </script>
 </body>
 </html>
-do-dojo-hub (14).html…]()
