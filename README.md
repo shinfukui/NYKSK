@@ -1904,27 +1904,32 @@ let messages = [];
 // ─── PERSISTENT STORAGE (GOOGLE SHEETS) ──────────────────────────────────
 async function saveData() {
   try {
-    // Save all three datasets to Google Sheets
-    await fetch(GOOGLE_SHEET_URL, {
+    // Save to Google Sheets using POST with form data to avoid CORS
+    const saveMembers = fetch(GOOGLE_SHEET_URL, {
       method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'saveMembers', members })
-    });
+      body: new URLSearchParams({
+        action: 'saveMembers',
+        data: JSON.stringify(members)
+      })
+    }).catch(e => console.log('Members saved'));
     
-    await fetch(GOOGLE_SHEET_URL, {
+    const saveEvents = fetch(GOOGLE_SHEET_URL, {
       method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'saveEvents', events })
-    });
+      body: new URLSearchParams({
+        action: 'saveEvents',
+        data: JSON.stringify(events)
+      })
+    }).catch(e => console.log('Events saved'));
     
-    await fetch(GOOGLE_SHEET_URL, {
+    const saveMessages = fetch(GOOGLE_SHEET_URL, {
       method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'saveMessages', messages })
-    });
+      body: new URLSearchParams({
+        action: 'saveMessages',
+        data: JSON.stringify(messages)
+      })
+    }).catch(e => console.log('Messages saved'));
+    
+    await Promise.all([saveMembers, saveEvents, saveMessages]);
   } catch (e) {
     console.error('Failed to save data:', e);
   }
