@@ -1483,7 +1483,7 @@
 <div class="login-overlay" id="loginOverlay">
   <div class="login-box">
     <div class="login-mon">
-      <img src="logo.jpg" alt="Kenshinkai Logo" style="width:100%;height:100%;object-fit:contain;;filter:invert(1);">
+      <img src="Logo.jpg" alt="Kenshinkai Logo" style="width:100%;height:100%;object-fit:contain;;filter:invert(1);">
     </div>
     <h2>NY Kenshinkai</h2>
     <p>Enter your name and the dojo passcode<br>to access the event board.</p>
